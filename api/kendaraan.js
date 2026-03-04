@@ -1,6 +1,4 @@
 // Vercel Serverless Function untuk API Kendaraan
-import axios from 'axios';
-
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -15,11 +13,19 @@ export default async function handler(req, res) {
 
   const GOOGLE_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL;
 
+  if (!GOOGLE_SCRIPT_URL) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Google Apps Script URL not configured' 
+    });
+  }
+
   try {
     // GET all vehicles
     if (req.method === 'GET') {
-      const response = await axios.get(GOOGLE_SCRIPT_URL);
-      return res.status(200).json(response.data);
+      const response = await fetch(GOOGLE_SCRIPT_URL);
+      const data = await response.json();
+      return res.status(200).json(data);
     }
 
     // POST create vehicle
@@ -33,15 +39,23 @@ export default async function handler(req, res) {
         });
       }
 
-      const response = await axios.post(GOOGLE_SCRIPT_URL, {
-        action: 'create',
-        data: vehicleData
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'create',
+          data: vehicleData
+        })
       });
+
+      const data = await response.json();
 
       return res.status(201).json({
         success: true,
         message: 'Kendaraan berhasil ditambahkan',
-        data: response.data
+        data: data
       });
     }
 

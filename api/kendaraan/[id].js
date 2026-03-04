@@ -1,6 +1,4 @@
 // Vercel Serverless Function untuk Update/Delete Kendaraan
-import axios from 'axios';
-
 export default async function handler(req, res) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -16,6 +14,13 @@ export default async function handler(req, res) {
   const { id } = req.query;
   const GOOGLE_SCRIPT_URL = process.env.GOOGLE_APPS_SCRIPT_URL;
 
+  if (!GOOGLE_SCRIPT_URL) {
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Google Apps Script URL not configured' 
+    });
+  }
+
   try {
     // PUT update vehicle
     if (req.method === 'PUT') {
@@ -28,30 +33,46 @@ export default async function handler(req, res) {
         });
       }
 
-      const response = await axios.post(GOOGLE_SCRIPT_URL, {
-        action: 'update',
-        id: id,
-        data: vehicleData
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'update',
+          id: id,
+          data: vehicleData
+        })
       });
+
+      const data = await response.json();
 
       return res.json({
         success: true,
         message: 'Kendaraan berhasil diupdate',
-        data: response.data
+        data: data
       });
     }
 
     // DELETE vehicle
     if (req.method === 'DELETE') {
-      const response = await axios.post(GOOGLE_SCRIPT_URL, {
-        action: 'delete',
-        id: id
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'delete',
+          id: id
+        })
       });
+
+      const data = await response.json();
 
       return res.json({
         success: true,
         message: 'Kendaraan berhasil dihapus',
-        data: response.data
+        data: data
       });
     }
 
